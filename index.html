@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>CampusConnect</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@500;700;800&family=Figtree:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --board: #1d2b4a;
+      --board-deep: #15203a;
+      --ink: #1b1b1f;
+      --text: #f2f4fa;
+      --muted: #aab4cf;
+      --yellow: #f7d95c;
+      --pink: #f5a9bb;
+      --mint: #a4dcbc;
+      --sky: #a9cdf2;
+      --display: "Bricolage Grotesque", "Trebuchet MS", system-ui, sans-serif;
+      --body: "Figtree", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--board);
+      background-image: radial-gradient(var(--board-deep) 1px, transparent 1px);
+      background-size: 22px 22px;
+      color: var(--text);
+      font-family: var(--body);
+      line-height: 1.55;
+    }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+
+    header { padding: 56px 0 28px; }
+    h1 {
+      font-family: var(--display);
+      font-weight: 800;
+      font-size: clamp(2.6rem, 8vw, 5rem);
+      line-height: 1;
+      margin: 0 0 14px;
+      letter-spacing: -0.02em;
+    }
+    header p { max-width: 52ch; color: var(--muted); font-size: 1.1rem; margin: 0; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; padding: 18px 0 26px; }
+    .controls button {
+      font: 600 0.95rem var(--body);
+      color: var(--text);
+      background: transparent;
+      border: 2px solid var(--muted);
+      border-radius: 999px;
+      padding: 7px 16px;
+      cursor: pointer;
+    }
+    .controls button[aria-pressed="true"] { background: var(--text); color: var(--ink); border-color: var(--text); }
+    button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible {
+      outline: 3px solid var(--yellow); outline-offset: 2px;
+    }
+
+    .board { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 26px; padding-bottom: 48px; }
+    .note {
+      position: relative;
+      color: var(--ink);
+      padding: 26px 20px 20px;
+      border-radius: 3px;
+      box-shadow: 0 6px 0 rgba(0, 0, 0, 0.18);
+      min-height: 190px;
+      display: flex; flex-direction: column; gap: 8px;
+    }
+    .note::before {
+      content: "";
+      position: absolute; top: 9px; left: 50%;
+      width: 12px; height: 12px; margin-left: -6px;
+      border-radius: 50%;
+      background: #d94a4a;
+      box-shadow: inset -2px -2px 0 rgba(0, 0, 0, 0.25);
+    }
+    .note:nth-child(3n+1) { transform: rotate(-1.4deg); }
+    .note:nth-child(3n+2) { transform: rotate(1deg); }
+    .note:nth-child(3n)   { transform: rotate(-0.4deg); }
+    .note.event { background: var(--yellow); }
+    .note.study { background: var(--sky); }
+    .note.sale  { background: var(--pink); }
+    .note.help  { background: var(--mint); }
+    .note h3 { font-family: var(--display); font-weight: 700; font-size: 1.3rem; line-height: 1.15; margin: 0; }
+    .note p { margin: 0; font-size: 0.98rem; }
+    .note .meta { margin-top: auto; font-weight: 600; font-size: 0.88rem; }
+    .empty { grid-column: 1 / -1; color: var(--muted); }
+
+    .post { background: var(--board-deep); padding: 40px 0 56px; }
+    .post h2 { font-family: var(--display); font-size: 2rem; margin: 0 0 6px; }
+    .post > .wrap > p { color: var(--muted); margin: 0 0 22px; }
+    form { display: grid; gap: 14px; max-width: 520px; }
+    label { display: grid; gap: 5px; font-weight: 600; font-size: 0.95rem; }
+    input, select, textarea {
+      font: 400 1rem var(--body);
+      padding: 10px 12px;
+      border-radius: 6px;
+      border: 2px solid transparent;
+      background: var(--text);
+      color: var(--ink);
+    }
+    form button {
+      justify-self: start;
+      font: 700 1rem var(--body);
+      background: var(--yellow);
+      color: var(--ink);
+      border: 0;
+      border-radius: 6px;
+      padding: 11px 22px;
+      cursor: pointer;
+    }
+    #status { min-height: 1.4em; color: var(--mint); margin: 0; }
+    footer { text-align: center; color: var(--muted); padding: 22px; font-size: 0.9rem; }
+
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>CampusConnect</h1>
+      <p>The board where students post events, study groups, secondhand stuff, and requests for help. Pin something or browse what's up.</p>
+    </div>
+  </header>
+
+  <main>
+    <div class="wrap">
+      <div class="controls" role="group" aria-label="Filter notes">
+        <button type="button" data-filter="all" aria-pressed="true">All</button>
+        <button type="button" data-filter="event" aria-pressed="false">Events</button>
+        <button type="button" data-filter="study" aria-pressed="false">Study groups</button>
+        <button type="button" data-filter="sale" aria-pressed="false">For sale</button>
+        <button type="button" data-filter="help" aria-pressed="false">Need help</button>
+      </div>
+      <section class="board" id="board" aria-live="polite"></section>
+    </div>
+
+    <section class="post" id="post">
+      <div class="wrap">
+        <h2>Pin a note</h2>
+        <p>Notes show up on the board right away. They reset when you reload the page.</p>
+        <form id="note-form">
+          <label>Type
+            <select name="type" required>
+              <option value="event">Event</option>
+              <option value="study">Study group</option>
+              <option value="sale">For sale</option>
+              <option value="help">Need help</option>
+            </select>
+          </label>
+          <label>Title
+            <input name="title" maxlength="60" required placeholder="Intro to Python study session">
+          </label>
+          <label>Details
+            <textarea name="body" rows="3" maxlength="160" required placeholder="What, where, and when"></textarea>
+          </label>
+          <label>Your name
+            <input name="author" maxlength="30" required placeholder="Alex">
+          </label>
+          <button type="submit">Pin to board</button>
+          <p id="status" role="status"></p>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <footer>Made for students, by students.</footer>
+
+  <script>
+    var notes = [
+      { type: "event", title: "Open mic night", body: "Student lounge, Friday 7 PM. Sign up at the door to perform.", author: "Music Club" },
+      { type: "study", title: "Calculus II study group", body: "Library room 204, Tuesdays 4 PM. Bring your problem sets.", author: "Dana" },
+      { type: "sale", title: "Used textbooks", body: "Chemistry and economics books, half price. Message me for photos.", author: "Marco" },
+      { type: "help", title: "Need a ride to the airport", body: "Saturday morning. Happy to split gas money.", author: "Priya" },
+      { type: "event", title: "Career fair prep workshop", body: "Resume reviews and mock interviews, Wednesday 3 PM in Hall B.", author: "Career Office" },
+      { type: "study", title: "Chemistry lab partners", body: "Looking for two people for the Thursday lab section.", author: "Sam" }
+    ];
+
+    var currentFilter = "all";
+    var board = document.getElementById("board");
+
+    function render() {
+      board.innerHTML = "";
+      var shown = notes.filter(function (n) { return currentFilter === "all" || n.type === currentFilter; });
+      if (shown.length === 0) {
+        var empty = document.createElement("p");
+        empty.className = "empty";
+        empty.textContent = "Nothing pinned here yet. Add the first note below.";
+        board.appendChild(empty);
+        return;
+      }
+      shown.forEach(function (n) {
+        var card = document.createElement("article");
+        card.className = "note " + n.type;
+        var h = document.createElement("h3"); h.textContent = n.title;
+        var p = document.createElement("p"); p.textContent = n.body;
+        var m = document.createElement("span"); m.className = "meta"; m.textContent = "Posted by " + n.author;
+        card.appendChild(h); card.appendChild(p); card.appendChild(m);
+        board.appendChild(card);
+      });
+    }
+
+    document.querySelectorAll(".controls button").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        currentFilter = btn.getAttribute("data-filter");
+        document.querySelectorAll(".controls button").forEach(function (b) {
+          b.setAttribute("aria-pressed", b === btn ? "true" : "false");
+        });
+        render();
+      });
+    });
+
+    document.getElementById("note-form").addEventListener("submit", function (e) {
+      e.preventDefault();
+      var f = e.target;
+      notes.unshift({
+        type: f.type.value,
+        title: f.title.value.trim(),
+        body: f.body.value.trim(),
+        author: f.author.value.trim()
+      });
+      f.reset();
+      document.getElementById("status").textContent = "Pinned! Scroll up to see it on the board.";
+      render();
+    });
+
+    render();
+  </script>
+</body>
+</html>
